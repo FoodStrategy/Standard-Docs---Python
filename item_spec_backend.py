@@ -228,6 +228,3 @@ def make_spec_dict(ws, column_dict):
             spec_dict[item_no] = AqItem(item_no, mfr, model,
                                         category, spec, accs)
     return spec_dict
-
-#main(r"O:\P22106 - PVCC\Specs\22106 ADDITIONAL SERVICES.xlsx", None,\
-    #r"O:\P22106 - PVCC\Specs\240112 Foodservice Section 114000")

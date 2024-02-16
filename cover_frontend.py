@@ -158,7 +158,7 @@ class CoverOptions(ttk.Frame):
 
     def make_covers(self):
 
-        TEMPLATE_PATH = r"Q:\Programming\Standard Documents\Templates\Cutbook Cover.docx"
+        TEMPLATE_PATH = r"Q:\Standard Documents\Templates\CUTBOOK COVER.docx"
         areas = self.existing_entries
         proj_num = self.proj_frame.proj_num.get()
         proj_title = self.proj_frame.job_title.get()
