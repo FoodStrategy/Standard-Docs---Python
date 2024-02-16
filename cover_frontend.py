@@ -357,8 +357,12 @@ class InputBox(Toplevel):
         self.menu.grid(column=0, row=0)
 
     def setup_window(self, title, size):
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        y = ((screen_height) - size[1]) // 2
+        x = (screen_width - size[0]) // 2
         self.title(title)
-        self.geometry(f'{size[0]}x{size[1]}')
+        self.geometry(f'{size[0]}x{size[1]}+{x}+{y}')
 
 class InputBoxOptions(ttk.Frame):
     def __init__(self, parent, prompt):
