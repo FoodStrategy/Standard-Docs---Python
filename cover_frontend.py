@@ -1,20 +1,15 @@
-from tkinter import*
+from tkinter import *
 from tkinter import ttk, messagebox, filedialog
-import cover_backend
 from datetime import date
-
-def pad_config(self, pad_amt):
-    for child in self.winfo_children():
-        child.grid_configure(padx=pad_amt, pady=pad_amt)   
+import cover_backend
 
 class AreaEntry(ttk.Frame):
     def __init__(self, parent):
-        self.parent = parent
         super().__init__(parent, relief='groove', borderwidth=2)
+        self.parent = parent
         self.create_widgets()
 
     def create_widgets(self):
-        
         self.area_name = StringVar()
         self.area_name.trace_add("write", self.area_name_callback)
         self.area = ttk.Entry(self, textvariable=self.area_name, width=25)
@@ -25,16 +20,15 @@ class AreaEntry(ttk.Frame):
         self.abbr = ttk.Entry(self, textvariable=self.area_abbr, width=5)
         self.abbr.grid(row=0, column=1, sticky='ne')
 
-        self.columnconfigure(0, weight=1)  # Left column
-        self.columnconfigure(1, weight=1)  # Right column
-
-        pad_config(self, 1)
+        self.columnconfigure(0, weight=1)  
+        self.columnconfigure(1, weight=1)  
 
     def area_name_callback(self, *args):
         print(self.area_name.get())
 
     def area_abbr_callback(self, *args):
         print(self.area_abbr.get())
+
 class CutCover(Toplevel):
     def __init__(self, title, size):
         super().__init__()
@@ -42,53 +36,44 @@ class CutCover(Toplevel):
         self.add_menu()
         
     def add_menu(self):
-        self.menu = CoverOptions(self)
-        self.menu.grid(column=0, row=0)
+        menu = CoverOptions(self)
+        menu.grid(column=0, row=0)
 
     def setup_window(self, title, size):
         self.title(title)
-        self.geometry(f'{size[0]}x{size[1]}')
+        x = (self.winfo_screenwidth() - size[0]) // 2
+        y = (self.winfo_screenheight() - size[1]) // 2
+        self.geometry(f'{size[0]}x{size[1]}+{x}+{y}')
 
 class CoverOptions(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        
+        self.parent = parent
         self.existing_entries = {}
-        
         self.grid(column=0, row=0, sticky='nsew')
         self.create_widgets()
-
+        
     def create_widgets(self):
-
         today = date.today().strftime('%B %d, %Y')
         today_formatted = date.today().strftime('%y%m%d')
 
-        you_r_here = ttk.Label(self, text = 'Today is ' + today + \
-                               ' [' + today_formatted + ']')
+        you_r_here = ttk.Label(self, text='Today is ' + today + ' [' + today_formatted + ']')
         you_r_here.grid(row=0, column=1)
 
-        info = ttk.Label(self, text='*Information below should correctly '\
-                         + 'autopopulate when you choose a directory.*')
+        info = ttk.Label(self, text='*Information below should correctly autopopulate when you choose a directory.*')
         info.grid(column=1, row=3, sticky=E)
 
-        dir_label = ttk.Label(self, text='File(s) to be saved at:')
-        dir_label.grid(column=0, row=2, sticky=E)
-
-        location_label = ttk.Label(self, text='Project Location:')
-        location_label.grid(column=0, row=1, sticky=E)
+        ttk.Label(self, text='File(s) to be saved at:').grid(column=0, row=2, sticky=E)
+        ttk.Label(self, text='Project Location:').grid(column=0, row=1, sticky=E)
+        ttk.Button(self, text='Edit', command=self.modal_input_box).grid(row=1, column =2, sticky=E)
         
         self.dir_path = StringVar()
         self.dir_path.trace_add('write', self.dir_path_callback)
-        directory = ttk.Label(self, textvariable=self.dir_path,\
-                                width=55, relief='sunken')
+        directory = ttk.Label(self, textvariable=self.dir_path, width=55, relief='sunken')
         directory.grid(column=1, row=2, sticky='ew')
 
-        gen_button = ttk.Button(self, text="Generate Covers", command=self.make_covers)
-        gen_button.grid(row=20, column = 1, columnspan=2)
-
-        dir_button = ttk.Button(self, text='Pick Directory',
-                                command=self.dir_pick)
-        dir_button.grid(column=0, row=3, sticky='sew')
+        ttk.Button(self, text="Generate Covers", command=self.make_covers).grid(row=20, column=1)
+        ttk.Button(self, text='Pick Directory', command=self.dir_pick).grid(column=2, row=2, sticky='sew')
         
         self.area_table = AreaTable(self)
         self.area_table.grid(column=1, row=6, sticky='nsew')
@@ -108,19 +93,20 @@ class CoverOptions(ttk.Frame):
         self.proj_frame.grid(column=1, row=4)
         
         self.loc = StringVar()
-        self.loc_lbl = ttk.Label(self, textvariable=self.loc,\
-                                 relief='sunken')
+        self.loc_lbl = ttk.Label(self, textvariable=self.loc, relief='sunken')
         self.loc_lbl.grid(column=1, row=1, sticky='new')
-        
+
         pad_config(self, 5)
+        self.modal_input_box()
 
-        self.dlg = InputBox('Location', "Where is this project located? (i.e. 'Rockville, MD')", (300, 150))
+        
+    def modal_input_box(self):
+        self.dlg = InputBox(self, 'Location', "Where is this project located? (i.e. 'Rockville, MD')", (300, 150))
         self.dlg.protocol("WM_DELETE_WINDOW", self.dismiss)
-        self.dlg.transient(self)   # dialog window is related to main
-        self.dlg.wait_visibility() # can't grab until window appears, so we wait
-        self.dlg.grab_set()        # ensure all input goes to our window
+        self.dlg.transient(self)
+        self.dlg.wait_visibility()
+        self.dlg.grab_set()
         self.dlg.wait_window()
-
         self.loc.set(self.dlg.loc)
 
     def dismiss(self):
@@ -128,7 +114,7 @@ class CoverOptions(ttk.Frame):
         self.dlg.destroy()
     
     def dir_pick(self):
-        path = filedialog.askdirectory()
+        path = filedialog.askdirectory(title='File(s) to be saved at:')
         self.dir_path.set(path)
         self.proj_frame.proj_num.set(path[path.index('/') + 1:path.index('-') - 1])
         self.proj_frame.job_title.set(path[path.index('-') + 2:path.index('/', 3)])
@@ -139,9 +125,6 @@ class CoverOptions(ttk.Frame):
     def status_callback(self, *args):
         print(self.status.get())
 
-    def filename_callback(self, *args):
-        print(self.filename.get())
-        
     def is_unique_entry(self, area_name, area_abbr):
         # Check if the area name or abbreviation already exists
         name_lower = area_name.lower()
@@ -157,19 +140,57 @@ class CoverOptions(ttk.Frame):
         return True
 
     def make_covers(self):
-
+        ready = True
+        err_message = []
+        
         TEMPLATE_PATH = r"Q:\Standard Documents\Templates\CUTBOOK COVER.docx"
+        
         areas = self.existing_entries
-        proj_num = self.proj_frame.proj_num.get()
-        proj_title = self.proj_frame.job_title.get()
-        directory = self.dir_path.get()
-        
-        cover_date = self.dlg.cover_date
-        location = self.dlg.loc
-        print(location)
-        
-        cover_backend.main(TEMPLATE_PATH, areas, proj_num, proj_title, directory, location, cover_date)
 
+        if len(areas) == 0:
+            ready = False
+            err_message.append('Area List')
+        
+        proj_num = self.proj_frame.proj_num.get()
+
+        if proj_num is None or proj_num == '':
+            ready = False
+            err_message.append('Project Number')
+            
+        proj_title = self.proj_frame.job_title.get()
+
+        if proj_title is None or proj_title == '':
+            ready = False
+            err_message.append('Project Title')
+        
+        directory = self.dir_path.get()
+
+        if directory is None or directory == '':
+            ready = False
+            err_message.append('Directory')
+        
+        cover_date = self.dlg.date
+
+        if cover_date is None or cover_date == '':
+            ready = False
+            err_message.append('Cover Date')
+            
+        location = self.dlg.loc
+
+        if location is None or location == '':
+            ready = False
+            err_message.append('Location')
+
+        if not ready:
+            err = 'The following fields are missing information: '
+            for i in err_message:
+                err += i + ', '
+            err = err[:len(err) - 2]
+            print(err)
+            messagebox.showerror(message=err, title='Error')
+        else:
+            cover_backend.main(areas, proj_num, proj_title, directory, location, cover_date)
+            
 class AreaTable(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, relief='sunken', borderwidth=2)
@@ -178,7 +199,6 @@ class AreaTable(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-        
         self.table = ttk.Treeview(self, columns=('area', 'abbr'), show='headings')
         self.table['selectmode'] = 'extended'
         self.table.heading('area', text='Area')
@@ -194,7 +214,6 @@ class ThreeButtons(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-
         self.new = ttk.Button(self, text='Add', command=self.new_area)
         self.new.grid(row=0, column=0, sticky='nsew')
 
@@ -204,9 +223,9 @@ class ThreeButtons(ttk.Frame):
         self.remove = ttk.Button(self, text='Remove', command=self.remove_area)
         self.remove.grid(row=0, column=2, sticky='nsew')
 
-        self.columnconfigure(0, weight=1)  # Left column
-        self.columnconfigure(1, weight=1)  # Center column
-        self.columnconfigure(2, weight=1)  # Right column
+        self.columnconfigure(0, weight=1)  
+        self.columnconfigure(1, weight=1)  
+        self.columnconfigure(2, weight=1)  
 
     def new_area(self):
         area_name = self.parent.entry_frame.area_name.get().strip()
@@ -220,7 +239,6 @@ class ThreeButtons(ttk.Frame):
             return
         if not self.confirming:
             if self.parent.is_unique_entry(area_name, area_abbr):
-                # No duplicates found, insert the new area
                 self.parent.existing_entries[area_abbr.lower()] = area_name.lower()
                 inserted = self.parent.area_table.table.insert('', 'end', values=(area_name, area_abbr))
                 print(self.parent.area_table.table.item(inserted))
@@ -238,15 +256,12 @@ class ThreeButtons(ttk.Frame):
    
                 
     def edit_area(self):
-        
         selected_item = self.parent.area_table.table.selection()
-        
 
         if len(selected_item) == 1:
             self.parent.area_table.table['selectmode'] = 'none'
             self.parent.status.set('Editing...')
-            area_name, area_abbr = self.parent.area_table.table.item(selected_item,
-                                                                         "values")
+            area_name, area_abbr = self.parent.area_table.table.item(selected_item, "values")
             self.parent.entry_frame.area_name.set(area_name)
             self.parent.entry_frame.area_abbr.set(area_abbr)
             self.edit['text'] = 'Confirm'
@@ -254,8 +269,6 @@ class ThreeButtons(ttk.Frame):
             self.remove['command'] = ''
             self.new['text'] = 'Cancel'
             self.new['command'] = self.cancel_edit
-            
-
         elif len(selected_item) > 1:
             messagebox.showinfo('Edit', "Only one item may be edited at a time")
         else:
@@ -285,19 +298,12 @@ class ThreeButtons(ttk.Frame):
     def remove_area(self):
         selected_items = self.parent.area_table.table.selection()
 
-        # Check if there is at least one selected item
         if selected_items:
             for selected_item in selected_items:
-                # Get the values of the selected item
-                area_name, area_abbr = self.parent.area_table.table.item(selected_item,
-                                                                         "values")
+                area_name, area_abbr = self.parent.area_table.table.item(selected_item, "values")
                 area_name_lower = area_name.lower()
                 area_abbr_lower = area_abbr.lower()
-
-                # Confirm before removal
                 self.parent.area_table.table.delete(selected_item)
-                    
-                # Remove from the dictionary tracking the entries
                 self.parent.existing_entries.pop(area_abbr_lower)
         else:
             messagebox.showinfo("Remove", "Please select an item to remove.")
@@ -309,8 +315,7 @@ class ProjectEntry(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-
-        job_lbl_lbl = ttk.Label(self, text='Project: ', relief='groove')
+        job_lbl_lbl = ttk.Label(self, text='Project: ', relief='flat')
         job_lbl_lbl.grid(column=0, row=0, sticky='nw')
 
         self.job_title = StringVar()
@@ -318,7 +323,7 @@ class ProjectEntry(ttk.Frame):
         job_label = ttk.Entry(self, textvariable=self.job_title, width=35)
         job_label.grid(column=1, row=0, sticky='new')
 
-        proj_num_lbl = ttk.Label(self, text='Number: ', relief='groove')
+        proj_num_lbl = ttk.Label(self, text='Number: ', relief='flat')
         proj_num_lbl.grid(column=2, row=0, sticky='new')
 
         self.proj_num = StringVar()
@@ -326,12 +331,10 @@ class ProjectEntry(ttk.Frame):
         proj_label = ttk.Entry(self, textvariable=self.proj_num, width=15)
         proj_label.grid(column=3, row=0, sticky='ne')
 
-        self.columnconfigure(0, weight=1)  # Left column
-        self.columnconfigure(1, weight=1)  # Center column
-        self.columnconfigure(2, weight=1)  # Left column
-        self.columnconfigure(3, weight=1)  # Center column
-
-        pad_config(self, 1)
+        self.columnconfigure(0, weight=1)  
+        self.columnconfigure(1, weight=1)  
+        self.columnconfigure(2, weight=1)  
+        self.columnconfigure(3, weight=1)  
 
     def proj_num_callback(self, *args):
         print(self.proj_num.get())
@@ -339,79 +342,43 @@ class ProjectEntry(ttk.Frame):
     def job_title_callback(self, *args):
         print(self.job_title.get())
 
-        pad_config(self, 3)    
-
-
 class InputBox(Toplevel):
-
-    def __init__(self, title, prompt, size):
-        super().__init__()
-
-        self.loc = None
-        self.cover_date = None
+    def __init__(self, parent, title, prompt, size):
+        super().__init__(parent)
         self.setup_window(title, size)
-        self.add_menu(prompt)
-
-    def add_menu(self, prompt):
-        self.menu = InputBoxOptions(self, prompt)
-        self.menu.grid(column=0, row=0)
+        self.create_widgets(prompt)
+        self.loc = None
+        self.date = None
 
     def setup_window(self, title, size):
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        y = ((screen_height) - size[1]) // 2
-        x = (screen_width - size[0]) // 2
         self.title(title)
+        x = (self.winfo_screenwidth() - size[0]) // 2
+        y = (self.winfo_screenheight() - size[1]) // 2
         self.geometry(f'{size[0]}x{size[1]}+{x}+{y}')
 
-class InputBoxOptions(ttk.Frame):
-    def __init__(self, parent, prompt):
-        super().__init__(parent)
-        self.parent = parent
-        self.grid(column=0, row=0, sticky='nsew')
-        self.create_widgets(prompt)
-
     def create_widgets(self, prompt):
+        ttk.Label(self, text=prompt).grid(row=0, column=0, sticky='nsew')
+        self.location_var = StringVar()
+        self.location_entry = ttk.Entry(self, textvariable=self.location_var)
+        self.location_entry.grid(row=1, column=0, sticky='nsew')
+        ttk.Button(self, text='OK', command=self.on_ok).grid(row=4, column=0, sticky='nsew')
 
-        label = ttk.Label(self, text=prompt)
-        label.grid(row=0, column=0, sticky='nsew')
 
-        label_2 = ttk.Label(self, text='Enter the date you would like on the covers')
-        label_2.grid(row=2, column=0, sticky='nsew')
-
-        self.entry_2 = ttk.Entry(self)
-        self.entry_2.grid(row=3, column=0, sticky='nsew')
-
-        self.entry = ttk.Entry(self)
-        self.entry.grid(row=1, column=0, sticky='nsew')
-
-        self.main_buttons = TwoButtons(self)
-        self.main_buttons.grid(column=0, row=12, sticky='nsew')
+        ttk.Label(self, text='Enter a date for covers to be generated')\
+                        .grid(row=2, column=0, sticky='nsew')
+        self.date_var = StringVar()
+        self.date_entry = ttk.Entry(self, textvariable=self.date_var)
+        self.date_entry.grid(row=3, column=0, sticky='nsew')
 
         pad_config(self, 2)
-        
+
+    def on_ok(self):
+        self.loc = self.location_var.get().strip()
+        self.date = self.date_var.get().strip()
+        self.destroy()
+
 def destroy():
     self.parent.destroy()
-        
-
-class TwoButtons(ttk.Frame):
-    def __init__(self, parent):
-        self.parent = parent
-        self.user_input = False
-        super().__init__(parent, borderwidth=2)
-        self.create_widgets()
-
-    def create_widgets(self):
-
-        self.ok = ttk.Button(self, text='Ok', command=lambda: ok(self.parent))
-        self.ok.grid(row=0, column=0, sticky='nsew')
-
-        self.cancel = ttk.Button(self, text='Cancel', command=cancel)
-        self.cancel.grid(row=0, column=1, sticky='nsew', padx=5)
-
-        self.columnconfigure(0, weight=1)  # Left column
-        self.columnconfigure(1, weight=1)  # Center column
-        self.columnconfigure(2, weight=1)  # Right column
 
 def ok(input_frame):
     input_frame.parent.loc = input_frame.entry.get()
@@ -422,5 +389,6 @@ def cancel(input_frame):
     input_frame.parent.loc = None
     input_frame.parent.destroy()
 
-
-                
+def pad_config(widget, pad_amt):
+    for child in widget.winfo_children():
+        child.grid_configure(padx=pad_amt, pady=pad_amt)

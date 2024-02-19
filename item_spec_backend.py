@@ -4,6 +4,7 @@ from docx import Document
 import re
 from docxcompose.composer import Composer
 from datetime import date
+from tkinter import messagebox
 
 class AqItem:
     
@@ -35,8 +36,7 @@ def main(xl_file, save_as, save_path):
     item_spec = compose(item_spec)
     
     item_spec.save(save_path + "/" + save_as + '.docx')
-    print('saved, exiting')
-    raise SystemExit(0)
+    messagebox.showinfo(title='Saved!', message='File saved to: {}'.format(save_path))
 
 def copy_header_footer(header_doc, item_spec):
     # Open the source and target documents

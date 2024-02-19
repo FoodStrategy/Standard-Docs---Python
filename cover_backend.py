@@ -1,10 +1,11 @@
 from docx import Document 
 from datetime import date
+from tkinter import messagebox
 
-def main(template_path, areas, proj_num, proj_title, directory, location, cover_date):
-
+def main(areas, proj_num, proj_title, directory, location, cover_date):
+    TEMPLATE_PATH = r"Q:\Standard Documents\Templates\CUTBOOK COVER.docx"
     print("template: {} \nproject: {} \nnumber:{} \ndirectory: {} \nlocation: {}"\
-          .format(template_path, proj_title, proj_num, directory, location))
+          .format(TEMPLATE_PATH, proj_title, proj_num, directory, location))
     for k,v in areas.items():
         print("\nkey: {} \nvalue: {}".format(k, v))
     print('making covers') 
@@ -21,7 +22,7 @@ def main(template_path, areas, proj_num, proj_title, directory, location, cover_
         replacements['<<Num>>'] = proj_num
         print('dict: {}'.format(replacements))
         
-        template = Document(template_path)
+        template = Document(TEMPLATE_PATH)
         filename = '{}\\{}.docx'.format(directory, value.upper())
         
         for k, v in replacements.items():
@@ -32,8 +33,9 @@ def main(template_path, areas, proj_num, proj_title, directory, location, cover_
 
         # Save the modified document to a new file
         template.save(filename)
-
+    
     print('done')
+    messagebox.showinfo(title='Saved!', message='Files saved to: {}'.format(directory))
 
 
 def init_replacements():
@@ -65,10 +67,10 @@ def find_and_replace(doc, old_text, new_text):
   for paragraph in doc.paragraphs:
     
     for run in paragraph.runs:
-      
-      print("run number {}: {}".format(i, run.text))
-      run.text = run.text.replace(old_text, new_text)
-      i += 1
+      if len(run.text) > 0:
+          print("run number {}: {}".format(i, run.text))
+          run.text = run.text.replace(old_text, new_text)
+          i += 1
 
   i=0
 

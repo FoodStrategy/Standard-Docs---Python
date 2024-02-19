@@ -1,32 +1,35 @@
 from tkinter import *
 from tkinter import ttk, messagebox, filedialog
-import item_spec_backend as spec_backend
-import item_spec_frontend as spec_frontend
 from datetime import date
 from math import floor
+import item_spec_backend as spec_backend
+import item_spec_frontend as spec_frontend
 import cover_frontend
 
-HOME_SIZE = (500,200)
-COVER_WINDOW_SIZE = (650, 550)
-ITEM_WINDOW_SIZE = (650, 500)
+HOME_SIZE = (500, 200)
+COVER_WINDOW_SIZE = (675, 550)
+ITEM_WINDOW_SIZE = (650, 250)
 
 class Home(Tk):
     def __init__(self, title, size):
         super().__init__()
-        self.setup_window(title, size)
-        self.add_menu()
-
-
-    def setup_window(self, title, size):
         self.title(title)
         self.geometry(f'{size[0]}x{size[1]}')
+        self.setup_menu()
+        self.protocol("WM_DELETE_WINDOW", self.quit_app)  # Handle close button
 
-    def add_menu(self):
+    def show_window(self):
+        self.deiconify()  # Unhides the window
+        self.lift()       # Brings the window to the front
+        
+    def setup_menu(self):
         self.menu = HomeMenu(self)
         self.menu.grid(row=0, column=0)
-        
-        '''self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)'''
+
+    def quit_app(self):
+        # Quit the application
+        self.quit()
+        self.destroy()
 
 class HomeMenu(ttk.Frame):
     def __init__(self, parent):
@@ -35,53 +38,44 @@ class HomeMenu(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
+        buttons = [
+            ("Item Spec", lambda: self.item_spec(), 'Generate itemized specification from AQ Excel export'),
+            ("Cutbook Covers", lambda: self.cut_covers(), 'Batch generate cutbook covers for a single project'),
+            ("General Spec", None, 'Select std. details to include in general spec - *NOT YET IMPLEMENTED*'),
+            ("Cutbook", None, 'Generate cutbook from AQ Excel - *NOT YET IMPLEMENTED*')
+        ]
 
-        self.itemspec = ttk.Button(self, text="Item Spec",\
-                                   command=lambda: self.item_spec(self.parent))
-        self.itemspec.grid(column=0, row=0, sticky='we')                      
+        for i, (text, command, desc) in enumerate(buttons):
+            button = ttk.Button(self, text=text, command=command)
+            button.grid(row=i, column=0, sticky='we')
+            label = ttk.Label(self, text=f"{desc}")
+            label.grid(row=i, column=1, sticky='we')
 
-        self.genspec = ttk.Button(self, text="General Spec")
-        self.genspec.grid(column=0, row=1, sticky='we')
-
-        self.covers = ttk.Button(self, text="Cutbook Covers",\
-                                 command=lambda: self.cut_covers(self.parent))
-        self.covers.grid(column=0, row=2, sticky='we')
-        
-        self.cutbook = ttk.Button(self, text='Cutbook')
-        self.cutbook.grid(column=0, row=3, sticky='we')
-
-        self.item_desc = ttk.Label(self, text='Item Specification')
-        self.item_desc.grid(column=1, row=0, sticky='we')
-        
-        self.gen_desc = ttk.Label(self, text='General Specification')
-        self.gen_desc.grid(column=1, row=1, sticky='we')
-
-        self.cover_desc = ttk.Label(self, text='Cutbook Cover(s)')
-        self.cover_desc.grid(column=1, row=2, sticky='we')
-
-        self.cutbook_desc = ttk.Label(self, text='Cutbook')
-        self.cutbook_desc.grid(column=1, row=3, sticky='we')
-        
         pad_config(self, 5)
 
-    def item_spec(self, parent):
-        parent.withdraw()
+    def item_spec(self):
+        self.parent.withdraw()
         win = spec_frontend.ItemSpec('Item Specification', ITEM_WINDOW_SIZE)
         win.lift()
+        def close_and_show_home():
+            win.destroy()  # Close the current window
+            self.parent.show_window()  # Show the home window
+        win.protocol("WM_DELETE_WINDOW", close_and_show_home)
         
-    def cut_covers(self, parent):
+    def cut_covers(self):
         self.parent.withdraw()
         win = cover_frontend.CutCover('Cutbook Covers', COVER_WINDOW_SIZE)
         win.lift()
+        def close_and_show_home():
+            win.destroy()  # Close the current window
+            self.parent.show_window()  # Show the home window
+        win.protocol("WM_DELETE_WINDOW", close_and_show_home)
 
-
-
-def pad_config(self, pad_amt):
-    for child in self.winfo_children():
-        child.grid_configure(padx=pad_amt, pady=pad_amt)   
+def pad_config(widget, pad_amt):
+    for child in widget.winfo_children():
+        child.grid_configure(padx=pad_amt, pady=pad_amt)
 
 if __name__ == "__main__":
-  
     app = Home('Document Generator', HOME_SIZE)
     app.lift()
     app.mainloop()
