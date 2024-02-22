@@ -99,6 +99,7 @@ class ItemOptions(ttk.Frame):
             messagebox.showerror(message=err, title='Error')
         else:
             spec_backend.main(sheet, name, save_here)
+            messagebox.showinfo(title='Saved!', message='File saved to: {}'.format(save_here))
 
 def pad_config(container, pad_amt):
     for child in container.winfo_children():

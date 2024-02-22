@@ -54,11 +54,16 @@ class CoverOptions(ttk.Frame):
         self.create_widgets()
         
     def create_widgets(self):
+
         today = date.today().strftime('%B %d, %Y')
         today_formatted = date.today().strftime('%y%m%d')
 
-        you_r_here = ttk.Label(self, text='Today is ' + today + ' [' + today_formatted + ']')
+        self.date_string = StringVar()
+        self.date_string.set('Today is ' + today + ' [' + today_formatted + ']')
+        you_r_here = ttk.Label(self, textvariable=self.date_string)
         you_r_here.grid(row=0, column=1)
+        
+        
 
         info = ttk.Label(self, text='*Information below should correctly autopopulate when you choose a directory.*')
         info.grid(column=1, row=3, sticky=E)
@@ -108,6 +113,8 @@ class CoverOptions(ttk.Frame):
         self.dlg.grab_set()
         self.dlg.wait_window()
         self.loc.set(self.dlg.loc)
+        self.date_string.set(self.date_string.get() + ' | Date on covers: '\
+                             + self.dlg.date)
 
     def dismiss(self):
         self.dlg.grab_release()
@@ -190,7 +197,7 @@ class CoverOptions(ttk.Frame):
             messagebox.showerror(message=err, title='Error')
         else:
             cover_backend.main(areas, proj_num, proj_title, directory, location, cover_date)
-            
+            messagebox.showinfo(title='Saved!', message='Files saved to: {}'.format(directory))
 class AreaTable(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, relief='sunken', borderwidth=2)
@@ -210,10 +217,13 @@ class ThreeButtons(ttk.Frame):
         self.parent = parent
         self.user_input = False
         self.confirming = False
+        self.name_holder = ''
+        self.abbr_holder = ''
         super().__init__(parent, borderwidth=2)
         self.create_widgets()
 
     def create_widgets(self):
+
         self.new = ttk.Button(self, text='Add', command=self.new_area)
         self.new.grid(row=0, column=0, sticky='nsew')
 
@@ -228,8 +238,9 @@ class ThreeButtons(ttk.Frame):
         self.columnconfigure(2, weight=1)  
 
     def new_area(self):
-        area_name = self.parent.entry_frame.area_name.get().strip()
-        area_abbr = self.parent.entry_frame.area_abbr.get().strip()
+
+        area_name = self.parent.entry_frame.area_name.get()
+        area_abbr = self.parent.entry_frame.area_abbr.get()
 
         if area_name is None or area_name == '':
             messagebox.showerror("Error", "Area name cannot be empty.")
@@ -244,28 +255,21 @@ class ThreeButtons(ttk.Frame):
                 print(self.parent.area_table.table.item(inserted))
                 self.parent.entry_frame.area_name.set('')
                 self.parent.entry_frame.area_abbr.set('')
-        else:
-            tree = self.parent.area_table.table
-            index = tree.index(tree.selection()[0])
-            tree.delete(tree.selection())
-            self.parent.existing_entries[area_abbr.lower()] = area_name.lower()
-            tree.insert('', index, values=(area_name, area_abbr))
-            print(f"Added new area: {area_name}, abbreviation: {area_abbr}")
-            self.parent.entry_frame.area_name.set('')
-            self.parent.entry_frame.area_abbr.set('')
-   
-                
+              
     def edit_area(self):
         selected_item = self.parent.area_table.table.selection()
+        
 
         if len(selected_item) == 1:
             self.parent.area_table.table['selectmode'] = 'none'
             self.parent.status.set('Editing...')
             area_name, area_abbr = self.parent.area_table.table.item(selected_item, "values")
+            self.name_holder = area_name
+            self.abbr_holder = area_abbr
             self.parent.entry_frame.area_name.set(area_name)
             self.parent.entry_frame.area_abbr.set(area_abbr)
             self.edit['text'] = 'Confirm'
-            self.edit['command'] = self.confirm_edit
+            self.edit['command'] = lambda: self.confirm_edit(area_name, area_abbr)
             self.remove['command'] = ''
             self.new['text'] = 'Cancel'
             self.new['command'] = self.cancel_edit
@@ -282,10 +286,13 @@ class ThreeButtons(ttk.Frame):
         self.new['text'] = 'New'
         self.new['command'] = self.new_area
         self.confirming = False
+        self.parent.entry_frame.area_name.set('')
+        self.parent.entry_frame.area_abbr.set('')
+        self.name_holder = ''
+        self.abbr_holder = ''
 
-    def confirm_edit(self):
-        self.confirming = True
-        self.new_area()
+    def confirm_edit(self, area_name, area_abbr):
+        self.confirm_area(area_name, area_abbr)
         self.parent.area_table.table['selectmode'] = 'extended'
         self.edit['text'] = 'Edit'
         self.edit['command'] = self.edit_area
@@ -294,7 +301,51 @@ class ThreeButtons(ttk.Frame):
         self.new['text'] = 'New'
         self.new['command'] = self.new_area
         self.parent.status.set('')
+
+    def confirm_area(self, area_name, area_abbr):
+        tree = self.parent.area_table.table
+        index = tree.index(tree.selection()[0])
+
+        old_name = self.name_holder
+        new_name = self.parent.entry_frame.area_name.get()
+
+        old_abbr = self.abbr_holder
+        new_abbr = self.parent.entry_frame.area_abbr.get()
         
+        if old_abbr != new_abbr and old_name == new_name:
+            print('1')
+            del self.parent.existing_entries[old_abbr.lower()]
+            self.parent.existing_entries[new_abbr.lower()] = old_name.lower()
+            tree.insert('', index, values=(old_name, new_abbr))
+            tree.delete(tree.selection())
+            self.parent.entry_frame.area_name.set('')
+            self.parent.entry_frame.area_abbr.set('')
+            self.name_holder = ''
+            self.abbr_holder = ''
+        elif old_abbr == new_abbr and old_name != new_name:
+            print('2')
+            self.parent.existing_entries[old_abbr.lower()] = new_name.lower()
+            tree.insert('', index, values=(new_name, old_abbr))
+            tree.delete(tree.selection())
+            self.parent.entry_frame.area_name.set('')
+            self.parent.entry_frame.area_abbr.set('')
+            self.name_holder = ''
+            self.abbr_holder = ''
+        elif old_abbr != new_abbr and old_name != new_name:
+            print('3')
+            del self.parent.existing_entries[old_abbr.lower()]
+            self.parent.existing_entries[new_abbr.lower()] = new_name.lower()
+            tree.insert('', index, values=(new_name, new_abbr))
+            tree.delete(tree.selection())
+            self.parent.entry_frame.area_name.set('')
+            self.parent.entry_frame.area_abbr.set('')
+            self.name_holder = ''
+            self.abbr_holder = ''
+        else:
+            messagebox.showinfo(title='Oops!', message='Edit the area, abbreviation,'\
+                            + 'both fields, or cancel the edit to continue editing'\
+                            + 'the rest of your list.') 
+
     def remove_area(self):
         selected_items = self.parent.area_table.table.selection()
 
@@ -369,12 +420,11 @@ class InputBox(Toplevel):
         self.date_var = StringVar()
         self.date_entry = ttk.Entry(self, textvariable=self.date_var)
         self.date_entry.grid(row=3, column=0, sticky='nsew')
-
         pad_config(self, 2)
 
     def on_ok(self):
         self.loc = self.location_var.get().strip()
-        self.date = self.date_var.get().strip()
+        self.date = self.date_var.get() 
         self.destroy()
 
 def destroy():

@@ -35,7 +35,6 @@ def main(areas, proj_num, proj_title, directory, location, cover_date):
         template.save(filename)
     
     print('done')
-    messagebox.showinfo(title='Saved!', message='Files saved to: {}'.format(directory))
 
 
 def init_replacements():
