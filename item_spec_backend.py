@@ -2,7 +2,6 @@ from openpyxl import load_workbook
 from openpyxl import cell
 from docx import Document
 import re
-from docxcompose.composer import Composer
 from datetime import date
 from tkinter import messagebox
 
@@ -33,7 +32,7 @@ def main(xl_file, save_as, save_path):
     items = clean_data(items)
     item_spec = make_spec(items)
 
-    item_spec = compose(item_spec)
+    #item_spec = compose(item_spec)
     
     item_spec.save(save_path + "/" + save_as + '.docx')
     
@@ -164,11 +163,10 @@ def compose(item_spec):
 
     spec_front = Document(front)
     spec_back = Document(back)
-    
-    composed = Composer(spec_front)
-    composed.append(item_spec)  
-    composed.append(spec_back)
-    
+
+    composed = Document()
+
+
     return composed
 
 def get_columns(filename):
